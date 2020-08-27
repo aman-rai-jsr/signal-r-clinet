@@ -6,7 +6,7 @@ import SignalRComponent from './component/SignalRComponent';
 function App() {
   return (
     <div className="App">
-      <SignalRComponent />
+     <SignalRComponent/>
     </div>
   );
 }

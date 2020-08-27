@@ -1,59 +1,67 @@
-import React from "react";
-import { HubConnection } from "signalr-client-react";
+import React, {Component} from "react";
+import * as signalR from "@aspnet/signalr";
+class SignalRComponent extends Component {
+  constructor(props) {
+    super(props);
 
-function SignalRComponent() {
-  let [messages, setMessages] = React.useState(["Some dummy message"]);
-
-  // Hub Url
-  const hubUrl = "/test";
-
-  let connection = new HubConnection(hubUrl);
-
-  // add second parameter if any configurtions needs to be added except the Hub URL as show below
-  // let connection = new HubConnection(hubUrl,{});
-
-  // to intially connect with hub when componet renders
-  React.useEffect(() => {
-    start();
-  });
-
-  // function which holds the code for creating a connection
-  async function start() {
-    try {
-      await connection.start();
-      console.log("connected");
-    } catch (err) {
-      console.log(err);
-      // Try to reconnect if fails
-      setTimeout(() => start(), 5000);
-    }
+    this.state = {
+      nick: "",
+      message: "",
+      messages: [],
+      hubConnection: null,
+    };
   }
 
-  // Reconnect when connection drop
-  connection.onclose(async () => {
-    await start();
-  });
+  componentDidMount = () => {
+    const nick = window.prompt("Your name:", "John");
+    const hubUrl = "https://localhost:5001/notifications";
+    const hubConnection = new signalR.HubConnectionBuilder().withUrl(hubUrl).build();
 
-  // Update the event listner name as per the Hub
-  connection.on("newMessage", (data) => {
-    console.log(data);
-    let temp = messages;
-    temp.push(data);
-    setMessages([...temp]);
-  });
+    this.setState({ hubConnection, nick }, () => {
+      this.state.hubConnection
+        .start()
+        .then(() => console.log("Connection started!"))
+        .catch((err) => console.log("Error while establishing connection :("));
 
-  const renderMessages = () => {
-    return messages.map((message) => {
-      return <div>{JSON.stringify(message)}</div>;
+      this.state.hubConnection.on("sendToAll", (nick, receivedMessage) => {
+        const text = `${nick}: ${receivedMessage}`;
+        const messages = this.state.messages.concat([text]);
+        this.setState({ messages });
+      });
     });
   };
 
-  return (
-    <>
-      <h1>Hello it works</h1>
-      <div>{renderMessages()}</div>
-    </>
-  );
+  sendMessage = () => {
+    this.state.hubConnection
+      .invoke("sendToAll", this.state.nick, this.state.message)
+      .catch((err) => console.error(err));
+
+    this.setState({ message: "" });
+  };
+
+  render() {
+    return (
+      <div>
+        <br />
+        <input
+          type="text"
+          value={this.state.message}
+          onChange={(e) => this.setState({ message: e.target.value })}
+        />
+
+        <button onClick={this.sendMessage}>Send</button>
+
+        <div>
+          {this.state.messages.map((message, index) => (
+            <span style={{ display: "block" }} key={index}>
+              {" "}
+              {message}{" "}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
 }
 
 export default SignalRComponent;
