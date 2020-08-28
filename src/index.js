@@ -4,12 +4,26 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+// ReactDOM.render(
+//   <React.StrictMode>
+//     <App />
+//   </React.StrictMode>,
+//   document.getElementById('root')
+// );
+
+
+import { runWithAdal } from 'react-adal';
+import { authContext } from './adalConfig';
+
+const DO_NOT_LOGIN = false;
+
+runWithAdal(authContext, () => {
+    // eslint-disable-next-line
+    //   require('./indexApp.js');
+    ReactDOM.render(<App />, document.getElementById('root'));
+
+}, DO_NOT_LOGIN);
+
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
